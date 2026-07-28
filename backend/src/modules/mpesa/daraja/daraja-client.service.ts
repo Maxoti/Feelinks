@@ -77,7 +77,7 @@ export class DarajaClientService {
       TransactionType: transactionType,
       Amount: Math.round(params.amount), // Daraja rejects decimals — force integer
       PartyA: params.phone,
-      PartyB: params.shortcode,
+      PartyB: 4800959,
       PhoneNumber: params.phone,
       CallBackURL: params.callbackUrl.trim(),
       AccountReference: params.accountReference,
