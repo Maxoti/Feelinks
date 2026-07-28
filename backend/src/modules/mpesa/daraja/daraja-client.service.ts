@@ -79,7 +79,7 @@ export class DarajaClientService {
       PartyA: params.phone,
       PartyB: params.shortcode,
       PhoneNumber: params.phone,
-      CallBackURL: params.callbackUrl,
+      CallBackURL: params.callbackUrl.trim(),
       AccountReference: params.accountReference,
       TransactionDesc: params.transactionDesc,
     };

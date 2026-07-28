@@ -61,7 +61,7 @@ export class StkService {
       passkey: this.config.get<string>('DARAJA_PASSKEY')!,
       accountReference: invoice.id,
       transactionDesc: 'School fees payment',
-      callbackUrl: this.config.get<string>('DARAJA_STK_CALLBACK_URL')!,
+      callbackUrl: this.config.get<string>('DARAJA_STK_CALLBACK_URL')!.trim(),
     });
 
     return this.stkRepo.save(
