@@ -49,13 +49,15 @@ export class StkService {
       throw new ConflictException('An STK push is already pending for this invoice');
     }
 
-    const shortcode = this.config.get<string>('DARAJA_PAYBILL_SHORTCODE')!;
+    const shortcode = this.config.get<string>('DARAJA_SHORTCODE')!;
+    const shortcodeType = this.config.get<string>('DARAJA_SHORTCODE_TYPE') as 'till' | 'paybill';
     const account = await this.businessAccounts.findByShortcode(shortcode);
 
     const { checkoutRequestId, merchantRequestId } = await this.darajaClient.initiateStkPush({
       phone,
       amount: Number(invoice.balance),
       shortcode,
+      shortcodeType,
       passkey: this.config.get<string>('DARAJA_PASSKEY')!,
       accountReference: invoice.id,
       transactionDesc: 'School fees payment',
@@ -125,7 +127,7 @@ export class StkService {
     }
 
     const businessAccount = await this.businessAccounts.findByShortcode(
-      this.config.get<string>('DARAJA_PAYBILL_SHORTCODE')!,
+      this.config.get<string>('DARAJA_SHORTCODE')!,
     );
 
     // STK already knows the invoice — no fuzzy matching needed. Insert

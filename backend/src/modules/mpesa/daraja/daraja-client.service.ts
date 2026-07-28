@@ -6,6 +6,7 @@ interface StkPushParams {
   phone: string;            // 2547XXXXXXXX
   amount: number;
   shortcode: string;
+  shortcodeType: 'till' | 'paybill';
   passkey: string;
   accountReference: string; // invoice id / admission no — ties callback back to invoice
   transactionDesc: string;
@@ -66,11 +67,14 @@ export class DarajaClientService {
     const timestamp = this.timestamp();
     const password = this.buildPassword(params.shortcode, params.passkey, timestamp);
 
+    const transactionType =
+      params.shortcodeType === 'till' ? 'CustomerBuyGoodsOnline' : 'CustomerPayBillOnline';
+
     const payload = {
       BusinessShortCode: params.shortcode,
       Password: password,
       Timestamp: timestamp,
-      TransactionType: 'CustomerPayBillOnline',
+      TransactionType: transactionType,
       Amount: Math.round(params.amount), // Daraja rejects decimals — force integer
       PartyA: params.phone,
       PartyB: params.shortcode,
