@@ -29,4 +29,9 @@ export const typeOrmConfig: DataSourceOptions = {
   ],
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
+  extra:{
+    max:5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  },
 };
