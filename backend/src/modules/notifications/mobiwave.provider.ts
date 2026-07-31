@@ -13,7 +13,7 @@ export class MobiwaveProvider {
     const senderId = this.config.get<string>('MOBIWAVE_SENDER_ID');
 
     const response = await axios.post(
-      'https://api.mobiwave.co.ke/v1/sms/send',
+      'https://sms.mobiwave.co.ke/api/v3/sms/send',
       { senderId, recipient, message },
       { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 10_000 },
     );
