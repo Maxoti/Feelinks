@@ -15,6 +15,12 @@ export interface MatchResult {
   reason: string;
 }
 
+interface ReconcileOutcome {
+  transaction: MpesaTransaction;
+  invoice: Invoice;
+  match: MatchResult;
+}
+
 @Injectable()
 export class ReconciliationService {
   private readonly logger = new Logger(ReconciliationService.name);
@@ -103,7 +109,7 @@ export class ReconciliationService {
   }
 
   async processTransaction(transactionId: string): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
+    const outcome = await this.dataSource.transaction<ReconcileOutcome | null>(async (manager) => {
       const transaction = await manager
         .createQueryBuilder(MpesaTransaction, 'tx')
         .setLock('pessimistic_write')
@@ -111,7 +117,7 @@ export class ReconciliationService {
         .getOne();
 
       if (!transaction || transaction.status !== 'unmatched') {
-        return;
+        return null;
       }
 
       const match = await this.findMatch(manager, transaction);
@@ -140,40 +146,77 @@ export class ReconciliationService {
           transTime: transaction.transTime.toISOString(),
         });
 
-        return;
+        return null;
       }
 
-      await this.reconcile(manager, transaction, match);
+      const { transaction: reconciledTx, invoice } = await this.reconcile(manager, transaction, match);
+      return { transaction: reconciledTx, invoice, match };
     });
+
+    // Only reached once the transaction above has actually committed —
+    // side effects can never roll back a payment that's already recorded.
+    if (outcome) {
+      const { transaction, invoice, match } = outcome;
+      this.finishSideEffects(transaction, match, invoice).catch((err) => {
+        this.logger.error(
+          `Post-reconcile side effects failed for tx ${transaction.id} (payment itself is safe)`,
+          err as Error,
+        );
+      });
+    }
   }
 
   async manuallyAssign(transactionId: string, invoiceId: string, actor: string): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
+    const outcome = await this.dataSource.transaction<ReconcileOutcome | null>(async (manager) => {
       const transaction = await manager
         .createQueryBuilder(MpesaTransaction, 'tx')
         .setLock('pessimistic_write')
         .where('tx.id = :transactionId', { transactionId })
         .getOne();
 
-      if (!transaction || transaction.status === 'reconciled') return;
+      if (!transaction || transaction.status === 'reconciled') return null;
 
-      await this.reconcile(manager, transaction, {
+      const match: MatchResult = {
         invoiceId,
         confidence: 1.0,
         reason: 'manual_assignment',
-      });
+      };
+
+      const { transaction: reconciledTx, invoice } = await this.reconcile(manager, transaction, match);
+
       await this.paymentEvents.log(
         { transactionId, invoiceId, eventType: 'manually_assigned', actor },
         manager,
       );
+
+      return { transaction: reconciledTx, invoice, match };
     });
+
+    // Fire side effects only after the whole DB transaction above has
+    // committed successfully — never inside it.
+    if (outcome) {
+      const { transaction, invoice, match } = outcome;
+      this.finishSideEffects(transaction, match, invoice).catch((err) => {
+        this.logger.error(
+          `Post-reconcile side effects failed for tx ${transaction.id} (payment itself is safe)`,
+          err as Error,
+        );
+      });
+    }
   }
 
+  /**
+   * Applies the payment and marks the transaction reconciled. Everything in
+   * here runs inside the caller's transaction (`manager`) and must stay
+   * strictly limited to DB writes that need to be atomic with each other.
+   * No external calls (PDF storage, SMS, websockets) belong in this method —
+   * see finishSideEffects() for those.
+   */
   private async reconcile(
     manager: EntityManager,
     transaction: MpesaTransaction,
     match: MatchResult,
-  ): Promise<void> {
+  ): Promise<{ transaction: MpesaTransaction; invoice: Invoice }> {
     const invoice = await this.invoicesService.applyPayment(
       manager,
       match.invoiceId,
@@ -201,13 +244,49 @@ export class ReconciliationService {
       manager,
     );
 
-    const student = await manager.findOne(Student, { where: { id: invoice.studentId } });
+    return {
+      transaction: { ...transaction, status: 'reconciled', matchedInvoiceId: match.invoiceId },
+      invoice,
+    };
+  }
+
+  /**
+   * Non-transactional side effects that follow a successful reconcile:
+   * receipt generation, SMS notification, websocket broadcast. Runs after
+   * the DB transaction has committed. Failures here are logged, not thrown
+   * back into the caller — the payment is already safely recorded.
+   */
+  private async finishSideEffects(
+    transaction: MpesaTransaction,
+    match: MatchResult,
+    invoice: Invoice,
+  ): Promise<void> {
+    const student = await this.dataSource.manager.findOne(Student, {
+      where: { id: invoice.studentId },
+    });
+
+    if (!student) {
+      this.logger.warn(
+        `No student found for invoice ${invoice.id} (studentId ${invoice.studentId}) — ` +
+          `skipping receipt/SMS for tx ${transaction.id}`,
+      );
+      this.paymentsGateway.emitPaymentReceived({
+        transactionId: transaction.id,
+        invoiceId: match.invoiceId,
+        amount: transaction.transAmount,
+        msisdn: transaction.msisdn,
+        channel: transaction.channel,
+        status: 'reconciled',
+        transTime: transaction.transTime.toISOString(),
+      });
+      return;
+    }
 
     const receipt = await this.receiptsService.generateForTransaction({
       transactionId: transaction.id,
       invoiceId: match.invoiceId,
-      studentName: student?.fullName ?? 'Unknown',
-      admissionNo: student?.admissionNo ?? '',
+      studentName: student.fullName,
+      admissionNo: student.admissionNo,
       termName: '',
       amountPaid: transaction.transAmount,
       balance: invoice.balance,
@@ -215,23 +294,21 @@ export class ReconciliationService {
       paidAt: transaction.transTime,
     });
 
-    if (student) {
-      await this.notificationsService.sendReceiptSms({
-        invoiceId: match.invoiceId,
-        transactionId: transaction.id,
-        phone: student.parentPhone,
-        studentName: student.fullName,
-        amount: transaction.transAmount,
-        balance: invoice.balance,
-        receiptUrl: receipt.pdfUrl,
-        mpesaReceiptNumber: transaction.transId,
-      });
-    }
+    await this.notificationsService.sendReceiptSms({
+      invoiceId: match.invoiceId,
+      transactionId: transaction.id,
+      phone: student.parentPhone,
+      studentName: student.fullName,
+      amount: transaction.transAmount,
+      balance: invoice.balance,
+      receiptUrl: receipt.pdfUrl,
+      mpesaReceiptNumber: transaction.transId,
+    });
 
     this.paymentsGateway.emitPaymentReceived({
       transactionId: transaction.id,
       invoiceId: match.invoiceId,
-      studentId: student?.id,
+      studentId: student.id,
       amount: transaction.transAmount,
       msisdn: transaction.msisdn,
       channel: transaction.channel,
