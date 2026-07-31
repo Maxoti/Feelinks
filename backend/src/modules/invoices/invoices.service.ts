@@ -48,25 +48,36 @@ export class InvoicesService {
    * serialize instead of racing on amount_paid.
    */
   async applyPayment(
-    manager: EntityManager,
-    invoiceId: string,
-    amount: string,
-  ): Promise<Invoice> {
-    const invoice = await manager
-      .createQueryBuilder(Invoice, 'invoice')
-      .setLock('pessimistic_write')
-      .where('invoice.id = :invoiceId', { invoiceId })
-      .getOne();
+  manager: EntityManager,
+  invoiceId: string,
+  amount: string,
+): Promise<Invoice> {
+  const invoice = await manager
+    .createQueryBuilder(Invoice, 'invoice')
+    .setLock('pessimistic_write')
+    .where('invoice.id = :invoiceId', { invoiceId })
+    .getOne();
 
-    if (!invoice) {
-      throw new NotFoundException(`Invoice ${invoiceId} not found`);
-    }
-
-    const newAmountPaid = (Number(invoice.amountPaid) + Number(amount)).toFixed(2);
-    await manager.update(Invoice, { id: invoiceId }, { amountPaid: newAmountPaid });
-
-    const updated = await manager.findOne(Invoice, { where: { id: invoiceId } });
-    if (!updated) throw new NotFoundException(`Invoice ${invoiceId} not found after update`);
-    return updated;
+  if (!invoice) {
+    throw new NotFoundException(`Invoice ${invoiceId} not found`);
   }
+
+  const newAmountPaid = Number(invoice.amountPaid) + Number(amount);
+  const newBalance = Number(invoice.amountDue) - newAmountPaid;
+  const newStatus = newBalance <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'unpaid';
+
+  await manager.update(
+    Invoice,
+    { id: invoiceId },
+    {
+      amountPaid: newAmountPaid.toFixed(2),
+      balance: newBalance.toFixed(2),
+      status: newStatus,
+    },
+  );
+
+  const updated = await manager.findOne(Invoice, { where: { id: invoiceId } });
+  if (!updated) throw new NotFoundException(`Invoice ${invoiceId} not found after update`);
+  return updated;
+}
 }
