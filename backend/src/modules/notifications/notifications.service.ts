@@ -38,18 +38,16 @@ export class NotificationsService {
     });
     const saved = await this.repo.save(notification);
 
-    // Delivery is best-effort here for simplicity — in production this
-    // should be enqueued via sms-queue-processor (BullMQ) so a slow/down
-    // Mobiwave endpoint never blocks the reconciliation/webhook response.
-    try {
-      const { providerRef } = await this.mobiwave.send(params.phone, message);
+    const result = await this.mobiwave.send(params.phone, message);
+
+    if (result.success) {
       await this.repo.update(saved.id, {
         status: 'sent',
-        providerRef,
+        providerRef: result.messageId ?? '',
         sentAt: new Date(),
       });
-    } catch (err) {
-      this.logger.error(`SMS delivery failed for notification ${saved.id}`, err as Error);
+    } else {
+      this.logger.error(`SMS delivery failed for notification ${saved.id}: ${result.error}`);
       await this.repo.increment({ id: saved.id }, 'retryCount', 1);
       await this.repo.update(saved.id, { status: 'failed' });
     }
