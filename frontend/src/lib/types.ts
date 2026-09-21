@@ -96,3 +96,9 @@ export interface MatchCandidate {
   status: InvoiceStatus;
   reasons: MatchReason[];
 }
+
+export interface PaymentRow extends MpesaTransaction {
+  studentName: string | null;
+  admissionNo: string | null;
+  invoiceId: string | null;
+}

@@ -7,6 +7,7 @@ const LINKS = [
   { href: '/', label: 'Overview' },
   { href: '/students', label: 'Students' },
   { href: '/invoices', label: 'Invoices' },
+  { href: '/payments', label: 'Payments' },
   { href: '/reconciliation', label: 'Reconciliation' },
   { href: '/business-accounts', label: 'Business accounts' },
   { href: '/terms', label: 'Terms' },
