@@ -14,6 +14,8 @@ import { ReceiptsModule } from './modules/receipts/receipts.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentEventsModule } from './modules/payment-events/payment-events.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 
 
 @Module({
@@ -32,6 +34,8 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
     ReceiptsModule,
     NotificationsModule,
     PaymentEventsModule,
+    DashboardModule,
+    TransactionsModule,
   ],
 })
 export class AppModule {}
