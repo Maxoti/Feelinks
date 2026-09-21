@@ -5,13 +5,13 @@ import type { OverviewStats } from '@/lib/types';
 
 type CardColor = 'green' | 'blue' | 'orange' | 'purple' | 'amber' | 'red';
 
-const COLOR_STYLES: Record<CardColor, { border: string; label: string; icon: string }> = {
-  green: { border: 'border-l-accent', label: 'text-accent-dark', icon: 'bg-accent/10 text-accent-dark' },
-  blue: { border: 'border-l-blue-600', label: 'text-blue-700', icon: 'bg-blue-50 text-blue-700' },
-  orange: { border: 'border-l-orange-600', label: 'text-orange-700', icon: 'bg-orange-50 text-orange-700' },
-  purple: { border: 'border-l-purple-600', label: 'text-purple-700', icon: 'bg-purple-50 text-purple-700' },
-  amber: { border: 'border-l-status-partial', label: 'text-status-partial', icon: 'bg-status-partial/10 text-status-partial' },
-  red: { border: 'border-l-status-overdue', label: 'text-status-overdue', icon: 'bg-status-overdue/10 text-status-overdue' },
+const COLOR_STYLES: Record<CardColor, { bg: string; border: string; label: string; figure: string }> = {
+  green: { bg: 'bg-accent/5', border: 'border-accent/30', label: 'text-accent-dark', figure: 'text-ink-950' },
+  blue: { bg: 'bg-blue-50', border: 'border-blue-200', label: 'text-blue-700', figure: 'text-ink-950' },
+  orange: { bg: 'bg-orange-50', border: 'border-orange-200', label: 'text-orange-700', figure: 'text-ink-950' },
+  purple: { bg: 'bg-purple-50', border: 'border-purple-200', label: 'text-purple-700', figure: 'text-ink-950' },
+  amber: { bg: 'bg-amber-50', border: 'border-status-partial/40', label: 'text-status-partial', figure: 'text-status-partial' },
+  red: { bg: 'bg-red-50', border: 'border-status-overdue/40', label: 'text-status-overdue', figure: 'text-status-overdue' },
 };
 
 export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
@@ -41,7 +41,7 @@ export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
       </StatCard>
 
       <StatCard label="Students who paid today" color="orange">
-        <Figure>{stats.studentsPaidToday}</Figure>
+        <Figure color="orange">{stats.studentsPaidToday}</Figure>
       </StatCard>
 
       {/* Add href="/payments" to the failed/pending card once that page exists */}
@@ -49,10 +49,9 @@ export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
         label="Needs matching"
         href="/reconciliation"
         color={u.count > 0 ? 'amber' : 'blue'}
-        attention={u.count > 0}
         note={u.count > 0 ? <><Money amount={u.amount} /> not yet on a student invoice</> : 'All payments are matched'}
       >
-        <Figure attention={u.count > 0} tone="amber">
+        <Figure color={u.count > 0 ? 'amber' : 'blue'}>
           {u.count === 0 ? 'None' : `${u.count} payment${u.count > 1 ? 's' : ''}`}
         </Figure>
       </StatCard>
@@ -60,14 +59,13 @@ export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
       <StatCard
         label="Failed or pending"
         color={failPend > 0 ? 'red' : 'blue'}
-        attention={failPend > 0}
         note={
           failPend > 0
             ? `${f.failed} failed, ${f.pending} stuck pending (over 5 min), last 24 hours`
             : 'Last 24 hours'
         }
       >
-        <Figure attention={failPend > 0} tone="red">
+        <Figure color={failPend > 0 ? 'red' : 'blue'}>
           {failPend === 0 ? 'None' : failPend}
         </Figure>
       </StatCard>
@@ -75,21 +73,9 @@ export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
   );
 }
 
-function Figure({
-  children,
-  attention,
-  tone = 'amber',
-}: {
-  children: React.ReactNode;
-  attention?: boolean;
-  tone?: 'amber' | 'red';
-}) {
-  const attentionClass = tone === 'red' ? 'text-status-overdue' : 'text-status-partial';
-  return (
-    <p className={`text-xl font-semibold font-mono tabular-nums ${attention ? attentionClass : 'text-ink-950'}`}>
-      {children}
-    </p>
-  );
+function Figure({ children, color }: { children: React.ReactNode; color: CardColor }) {
+  const cls = COLOR_STYLES[color].figure;
+  return <p className={`text-xl font-semibold font-mono tabular-nums ${cls}`}>{children}</p>;
 }
 
 function StatCard(props: {
@@ -98,14 +84,14 @@ function StatCard(props: {
   note?: React.ReactNode;
   href?: string;
   color: CardColor;
-  attention?: boolean;
 }) {
   const styles = COLOR_STYLES[props.color];
 
   const cls = [
-    'block rounded-lg border border-slate-200 bg-white p-5 border-l-4',
+    'block rounded-lg border p-5 transition-colors',
+    styles.bg,
     styles.border,
-    props.href ? 'hover:border-accent/40' : '',
+    props.href ? 'hover:border-accent/60' : '',
   ].join(' ');
 
   const body = (
