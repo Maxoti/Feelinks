@@ -59,3 +59,40 @@ export interface StkRequest {
   amount: string;
   status: 'pending' | 'success' | 'failed' | 'timeout';
 }
+
+
+export interface OverviewStats {
+  collectedToday: number;
+  collectedThisMonth: number;
+  outstandingFees: number;
+  studentsPaidToday: number;
+  unreconciled: { count: number; amount: number };
+  failedOrPending: { failed: number; pending: number };
+  generatedAt: string;
+}
+
+export interface MpesaTransaction {
+  id: string;
+  transId: string;
+  channel: MpesaChannel;
+  accountType: AccountType;
+  msisdn: string;
+  transAmount: string;
+  billRefNumber: string | null;
+  transTime: string;
+  status: MpesaTxStatus;
+  matchConfidence: string | null;
+}
+
+export type MatchReason = 'admission_no' | 'phone';
+
+export interface MatchCandidate {
+  invoiceId: string;
+  studentName: string;
+  admissionNo: string;
+  grade: string | null;
+  termName: string;
+  balance: string;
+  status: InvoiceStatus;
+  reasons: MatchReason[];
+}

@@ -1,4 +1,4 @@
-import type { Student, Term, Invoice, BusinessAccount, Receipt, StkRequest } from './types';
+import type { Student, Term, Invoice, BusinessAccount, Receipt, StkRequest, OverviewStats, MpesaTransaction, MpesaTxStatus, MatchCandidate } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -59,6 +59,18 @@ export const api = {
         body: JSON.stringify({ invoiceId, phone }),
       }),
   },
-};
+  dashboard: {
+    overview: () => request<OverviewStats>('/dashboard/overview'),
+  },
+  transactions: {
+    list: (status: MpesaTxStatus = 'unmatched') =>
+      request<MpesaTransaction[]>(`/transactions?status=${status}`),
+    candidates: (id: string) => request<MatchCandidate[]>(`/transactions/${id}/candidates`),
+    assign: (id: string, invoiceId: string) =>
+      request<MpesaTransaction>(`/transactions/${id}/assign`, {
+        method: 'POST',
+        body: JSON.stringify({ invoiceId }),
+      }),
+  },};
 
 export { ApiError };

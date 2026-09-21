@@ -1,19 +1,19 @@
+// -> frontend/src/app/page.tsx   (replaces your current Overview page)
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { Money } from '@/components/Money';
 import { StatusBadge } from '@/components/StatusBadge';
+import { OverviewStatsGrid } from '@/components/OverviewStats';
+import { AutoRefresh } from '@/components/AutoRefresh';
 
 export default async function OverviewPage() {
-  const [students, invoices, activeTerm] = await Promise.all([
+  const [students, invoices, activeTerm, stats] = await Promise.all([
     api.students.list().catch(() => []),
     api.invoices.list().catch(() => []),
     api.terms.active().catch(() => null),
+    api.dashboard.overview().catch(() => null),
   ]);
-
-  const outstanding = invoices
-    .filter((inv) => inv.status !== 'paid')
-    .reduce((sum, inv) => sum + Number(inv.balance), 0);
 
   const recentUnpaid = invoices
     .filter((inv) => inv.status === 'unpaid' || inv.status === 'partial')
@@ -22,21 +22,13 @@ export default async function OverviewPage() {
   return (
     <>
       <PageHeader title="Overview" />
+      <AutoRefresh />
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <p className="text-xs text-slate-500 mb-1">Active term</p>
-          <p className="text-lg font-semibold text-ink-950">{activeTerm?.name ?? 'None set'}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <p className="text-xs text-slate-500 mb-1">Students</p>
-          <p className="text-lg font-semibold text-ink-950 font-mono tabular-nums">{students.length}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <p className="text-xs text-slate-500 mb-1">Outstanding balance</p>
-          <Money amount={outstanding} className="text-lg font-semibold text-ink-950" />
-        </div>
-      </div>
+      <p className="text-sm text-slate-500 -mt-2 mb-5">
+        {activeTerm?.name ?? 'No active term'} &middot; <span className="font-mono tabular-nums">{students.length}</span> students
+      </p>
+
+      <OverviewStatsGrid stats={stats} />
 
       <h2 className="text-sm font-medium text-slate-600 mb-3">Invoices needing attention</h2>
       <div className="space-y-2">

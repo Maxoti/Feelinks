@@ -7,6 +7,7 @@ const LINKS = [
   { href: '/', label: 'Overview' },
   { href: '/students', label: 'Students' },
   { href: '/invoices', label: 'Invoices' },
+  { href: '/reconciliation', label: 'Reconciliation' },
   { href: '/business-accounts', label: 'Business accounts' },
   { href: '/terms', label: 'Terms' },
 ];
@@ -21,7 +22,7 @@ export function Sidebar() {
       </div>
       <nav className="space-y-1">
         {LINKS.map((link) => {
-          const active = pathname === link.href;
+          const active = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}
