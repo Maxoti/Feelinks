@@ -5,13 +5,13 @@ import type { OverviewStats } from '@/lib/types';
 
 type CardColor = 'green' | 'blue' | 'orange' | 'purple' | 'amber' | 'red';
 
-const COLOR_STYLES: Record<CardColor, { bg: string; border: string; label: string; figure: string }> = {
-  green: { bg: 'bg-accent/5', border: 'border-accent/30', label: 'text-accent-dark', figure: 'text-ink-950' },
-  blue: { bg: 'bg-blue-50', border: 'border-blue-200', label: 'text-blue-700', figure: 'text-ink-950' },
-  orange: { bg: 'bg-orange-50', border: 'border-orange-200', label: 'text-orange-700', figure: 'text-ink-950' },
-  purple: { bg: 'bg-purple-50', border: 'border-purple-200', label: 'text-purple-700', figure: 'text-ink-950' },
-  amber: { bg: 'bg-amber-50', border: 'border-status-partial/40', label: 'text-status-partial', figure: 'text-status-partial' },
-  red: { bg: 'bg-red-50', border: 'border-status-overdue/40', label: 'text-status-overdue', figure: 'text-status-overdue' },
+const COLOR_STYLES: Record<CardColor, { bg: string; label: string; figure: string; note: string }> = {
+  green: { bg: 'bg-accent', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
+  blue: { bg: 'bg-blue-600', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
+  orange: { bg: 'bg-orange-500', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
+  purple: { bg: 'bg-purple-600', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
+  amber: { bg: 'bg-status-partial', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
+  red: { bg: 'bg-status-overdue', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
 };
 
 export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
@@ -29,15 +29,15 @@ export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
   return (
     <section aria-label="Collections overview" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
       <StatCard label="Collected today" color="green">
-        <Money amount={stats.collectedToday} className="text-xl font-semibold text-ink-950" />
+        <Money amount={stats.collectedToday} className="text-xl font-semibold text-white" />
       </StatCard>
 
       <StatCard label="Collected this month" color="blue">
-        <Money amount={stats.collectedThisMonth} className="text-xl font-semibold text-ink-950" />
+        <Money amount={stats.collectedThisMonth} className="text-xl font-semibold text-white" />
       </StatCard>
 
       <StatCard label="Outstanding fees" href="/invoices" color="purple">
-        <Money amount={stats.outstandingFees} className="text-xl font-semibold text-ink-950" />
+        <Money amount={stats.outstandingFees} className="text-xl font-semibold text-white" />
       </StatCard>
 
       <StatCard label="Students who paid today" color="orange">
@@ -88,17 +88,16 @@ function StatCard(props: {
   const styles = COLOR_STYLES[props.color];
 
   const cls = [
-    'block rounded-lg border p-5 transition-colors',
+    'block rounded-lg p-5 shadow-sm transition-transform',
     styles.bg,
-    styles.border,
-    props.href ? 'hover:border-accent/60' : '',
+    props.href ? 'hover:scale-[1.02]' : '',
   ].join(' ');
 
   const body = (
     <>
       <p className={`text-xs mb-1 font-medium ${styles.label}`}>{props.label}</p>
       {props.children}
-      {props.note && <p className="mt-1 text-xs text-slate-500">{props.note}</p>}
+      {props.note && <p className={`mt-1 text-xs ${styles.note}`}>{props.note}</p>}
     </>
   );
 
