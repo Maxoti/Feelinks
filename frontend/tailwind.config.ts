@@ -5,7 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Ledger-inspired palette: deep slate for structure, one calm teal
+        // Ledger-inspired palette: deep navy for structure, one clean green
         // accent for primary actions, and semantic status colors that map
         // 1:1 onto invoice/transaction states — not decoration, information.
         ink: {
@@ -15,11 +15,11 @@ const config: Config = {
         },
         paper: '#F7F6F2',
         accent: {
-          DEFAULT: '#0E7C7B',
-          dark: '#0A5F5E',
+          DEFAULT: '#0E9F6E',
+          dark: '#0B7A55',
         },
         status: {
-          paid: '#0E7C7B',
+          paid: '#0E9F6E',
           partial: '#B7791F',
           unpaid: '#94A3B8',
           overdue: '#B4453A',

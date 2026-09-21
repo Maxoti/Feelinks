@@ -7,7 +7,7 @@
 }
 
 body {
-  background-color: theme('colors.paper');
+  background-color: #ffffff;
   color: theme('colors.ink.950');
 }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -18,8 +19,15 @@ export function Sidebar() {
   return (
     <aside className="w-56 shrink-0 bg-ink-950 text-slate-300 min-h-screen px-4 py-6">
       <div className="px-2 mb-8">
-        <p className="text-white font-semibold tracking-tight">Feelinks Fees</p>
-        <p className="text-xs text-slate-500 mt-0.5">Fee management</p>
+        <Image
+          src="/feelinkslogo.png"
+          alt="Feelinks"
+          width={140}
+          height={140}
+          className="w-28 h-auto -ml-1"
+          priority
+        />
+        <p className="text-xs text-slate-500 -mt-2">Fee management</p>
       </div>
       <nav className="space-y-1">
         {LINKS.map((link) => {
