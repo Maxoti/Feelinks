@@ -17,7 +17,7 @@ const LINKS = [
 export function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-56 shrink-0 bg-ink-950 text-slate-300 min-h-screen px-4 py-6">
+    <aside className="w-56 shrink-0 bg-white border-r border-slate-200 text-slate-600 min-h-screen px-4 py-6">
       <div className="px-2 mb-8">
         <Image
           src="/feelinkslogo.png"
@@ -27,7 +27,6 @@ export function Sidebar() {
           className="w-28 h-auto -ml-1"
           priority
         />
-        <p className="text-xs text-slate-500 -mt-2">Fee management</p>
       </div>
       <nav className="space-y-1">
         {LINKS.map((link) => {
@@ -38,8 +37,8 @@ export function Sidebar() {
               href={link.href}
               className={`block rounded-md px-3 py-2 text-sm transition-colors ${
                 active
-                  ? 'bg-ink-800 text-white font-medium'
-                  : 'text-slate-400 hover:bg-ink-900 hover:text-slate-200'
+                  ? 'bg-accent/10 text-accent-dark font-medium'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {link.label}
