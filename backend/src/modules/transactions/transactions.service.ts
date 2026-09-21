@@ -25,6 +25,26 @@ export class TransactionsService {
     );
   }
 
+  // Recent payments for the Payments page: every status, newest first, with the student
+  // (a transaction only knows its invoice; the student lives on the invoice).
+  recent(status?: string, limit = 100) {
+    if (status && !STATUSES.includes(status)) throw new BadRequestException('Unknown status');
+    const capped = Math.min(Math.max(Number(limit) || 100, 1), 200);
+    return this.db.query(
+      `SELECT ${TX_COLUMNS},
+              s.full_name    AS "studentName",
+              s.admission_no AS "admissionNo",
+              t.matched_invoice_id AS "invoiceId"
+       FROM mpesa_transactions t
+       LEFT JOIN invoices i ON i.id = t.matched_invoice_id
+       LEFT JOIN students s ON s.id = i.student_id
+       WHERE ($1::text IS NULL OR t.status = $1)
+       ORDER BY t.trans_time DESC
+       LIMIT $2`,
+      [status ?? null, capped],
+    );
+  }
+
   // Suggests open invoices whose student matches the typed reference or the paying phone.
   // No invented confidence score: it states WHY each invoice is suggested.
   async candidates(id: string) {

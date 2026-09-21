@@ -10,6 +10,11 @@ export class TransactionsController {
     return this.svc.list(status);
   }
 
+  @Get('recent')
+  recent(@Query('status') status?: string, @Query('limit') limit?: string) {
+    return this.svc.recent(status || undefined, limit ? Number(limit) : undefined);
+  }
+
   @Get(':id/candidates')
   candidates(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.candidates(id);
