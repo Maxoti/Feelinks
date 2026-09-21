@@ -8,6 +8,10 @@ import type { Student } from '@/lib/types';
 export default async function StudentsPage() {
   const students = await api.students.list().catch(() => [] as Student[]);
 
+  const sorted = [...students].sort(
+    (a, b) => Number(a.admissionNo) - Number(b.admissionNo)
+  );
+
   return (
     <>
       <PageHeader
@@ -19,7 +23,7 @@ export default async function StudentsPage() {
         }
       />
       <DataTable<Student>
-        rows={students}
+        rows={sorted}
         keyFor={(s) => s.id}
         emptyMessage="No students registered yet."
         columns={[
