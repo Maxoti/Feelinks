@@ -15,8 +15,10 @@ const STYLES: Record<string, string> = {
   timeout: 'bg-status-overdue/10 text-status-overdue border-status-overdue/30',
 };
 
-export function StatusBadge({ status }: { status: string }) {
-  const style = STYLES[status] ?? 'bg-slate-100 text-slate-600 border-slate-200';
+export function StatusBadge({ status, className }: { status: string; className?: string }) {
+  // className, when passed, replaces the status-based colors entirely (e.g. a badge
+  // sitting on a solid-colored card needs its own contrast, not the default tint).
+  const style = className ?? STYLES[status] ?? 'bg-slate-100 text-slate-600 border-slate-200';
   return (
     <span
       className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${style}`}

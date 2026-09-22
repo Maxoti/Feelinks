@@ -6,29 +6,11 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { StkPushForm } from '@/components/StkPushForm';
 import { formatDate } from '@/lib/format';
 
-const STATUS_CARD_BG: Record<string, string> = {
-  paid: 'bg-accent',
-  reconciled: 'bg-accent',
-  success: 'bg-accent',
-  partial: 'bg-status-partial',
-  pending: 'bg-status-partial',
-  matched: 'bg-status-partial',
-  unpaid: 'bg-slate-500',
-  overpaid: 'bg-status-overdue',
-  unmatched: 'bg-status-overdue',
-  rejected: 'bg-status-overdue',
-  failed: 'bg-status-overdue',
-  timeout: 'bg-status-overdue',
-};
-
 export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
   const invoice = await api.invoices.get(params.id).catch(() => null);
   if (!invoice) notFound();
 
   const receipts = await api.receipts.byInvoice(invoice.id).catch(() => []);
-
-  const balanceCleared = Number(invoice.balance) <= 0;
-  const statusBg = STATUS_CARD_BG[invoice.status] ?? 'bg-slate-500';
 
   return (
     <>
@@ -36,16 +18,45 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="rounded-lg bg-blue-600 p-5">
-          <p className="text-xs text-white/80 mb-1">Amount due</p>
+          <p className="text-xs text-blue-100 mb-1">Amount due</p>
           <Money amount={invoice.amountDue} className="text-lg font-semibold text-white" />
         </div>
-        <div className={`rounded-lg p-5 ${balanceCleared ? 'bg-accent' : 'bg-orange-500'}`}> </div>
-          <p className="text-xs text-white/80 mb-1">Balance</p>
-          <Money amount={invoice.balance} className="text-lg" ></Money>
+        <div className="rounded-lg bg-red-600 p-5">
+          <p className="text-xs text-red-100 mb-1">Balance</p>
+          <Money amount={invoice.balance} className="text-lg font-semibold text-white" />
         </div>
-        <div className={`rounded-lg p-5 ${statusBg}`}>
-          <p className="text-xs text-white/80 mb-1">Status</p>
-          <StatusBadge status={invoice.status} />
+        <div className="rounded-lg bg-green-600 p-5">
+          <p className="text-xs text-green-100 mb-1">Status</p>
+          <div className="mt-1"><StatusBadge status={invoice.status} className="bg-white/20 text-white border-white/30" /></div>
         </div>
+      </div>
 
-   </>)}
+      {invoice.status !== 'paid' && (
+        <div className="rounded-lg border border-slate-200 bg-white p-5 mb-6">
+          <h2 className="text-sm font-medium text-ink-950 mb-3">Collect payment via STK push</h2>
+          <StkPushForm invoiceId={invoice.id} defaultPhone={invoice.student?.parentPhone} />
+        </div>
+      )}
+
+      <h2 className="text-sm font-medium text-slate-600 mb-3">Receipts</h2>
+      {receipts.length === 0 ? (
+        <p className="text-sm text-slate-500">No receipts issued for this invoice yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {receipts.map((r) => (
+            <a
+              key={r.id}
+              href={r.pdfUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-accent/40"
+            >
+              <span className="font-mono text-sm">Receipt #{r.receiptNo}</span>
+              <span className="text-xs text-slate-500">{formatDate(r.issuedAt)}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
