@@ -16,3 +16,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   outline: 2px solid theme('colors.accent.DEFAULT');
   outline-offset: 2px;
 }
+
+
+/* Inside the navy sidebar the focus ring must be lime; navy would vanish. */
+aside a:focus-visible, aside button:focus-visible {
+  outline-color: theme('colors.solar.DEFAULT');
+}

@@ -16,7 +16,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     <>
       <PageHeader title={invoice.student?.fullName ?? 'Invoice'} />
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="rounded-lg bg-blue-600 p-5">
           <p className="text-xs text-blue-100 mb-1">Amount due</p>
           <Money amount={invoice.amountDue} className="text-lg font-semibold text-white" />

@@ -14,7 +14,7 @@ const FILTERS: { value: '' | MpesaTxStatus; label: string }[] = [
 ];
 
 const BADGE: Record<string, string> = {
-  reconciled: 'bg-accent/10 text-accent border-accent/30',
+  reconciled: 'bg-solar-soft text-ink-950 border-solar-dark',
   matched: 'bg-slate-100 text-slate-700 border-slate-300',
   unmatched: 'bg-amber-50 text-amber-800 border-amber-300',
   rejected: 'bg-red-50 text-red-700 border-red-200',

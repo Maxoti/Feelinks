@@ -3,17 +3,6 @@ import Link from 'next/link';
 import { Money } from '@/components/Money';
 import type { OverviewStats } from '@/lib/types';
 
-type CardColor = 'green' | 'blue' | 'orange' | 'purple' | 'amber' | 'red';
-
-const COLOR_STYLES: Record<CardColor, { bg: string; label: string; figure: string; note: string }> = {
-  green: { bg: 'bg-accent', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
-  blue: { bg: 'bg-blue-600', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
-  orange: { bg: 'bg-orange-500', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
-  purple: { bg: 'bg-purple-600', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
-  amber: { bg: 'bg-status-partial', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
-  red: { bg: 'bg-status-overdue', label: 'text-white/80', figure: 'text-white', note: 'text-white/70' },
-};
-
 export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
   if (!stats) {
     return (
@@ -28,54 +17,53 @@ export function OverviewStatsGrid({ stats }: { stats: OverviewStats | null }) {
 
   return (
     <section aria-label="Collections overview" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-      <StatCard label="Collected today" color="green">
-        <Money amount={stats.collectedToday} className="text-xl font-semibold text-white" />
+      <StatCard label="Collected today" hero>
+        <Money amount={stats.collectedToday} className="text-xl font-semibold text-solar" />
       </StatCard>
 
-      <StatCard label="Collected this month" color="blue">
-        <Money amount={stats.collectedThisMonth} className="text-xl font-semibold text-white" />
+      <StatCard label="Collected this month">
+        <Money amount={stats.collectedThisMonth} className="text-xl font-semibold text-ink-950" />
       </StatCard>
 
-      <StatCard label="Outstanding fees" href="/invoices" color="purple">
-        <Money amount={stats.outstandingFees} className="text-xl font-semibold text-white" />
+      <StatCard label="Outstanding fees" href="/invoices">
+        <Money amount={stats.outstandingFees} className="text-xl font-semibold text-ink-950" />
       </StatCard>
 
-      <StatCard label="Students who paid today" color="orange">
-        <Figure color="orange">{stats.studentsPaidToday}</Figure>
+      <StatCard label="Students who paid today">
+        <Figure>{stats.studentsPaidToday}</Figure>
       </StatCard>
 
       {/* Add href="/payments" to the failed/pending card once that page exists */}
       <StatCard
         label="Needs matching"
         href="/reconciliation"
-        color={u.count > 0 ? 'amber' : 'blue'}
+        attention={u.count > 0}
         note={u.count > 0 ? <><Money amount={u.amount} /> not yet on a student invoice</> : 'All payments are matched'}
       >
-        <Figure color={u.count > 0 ? 'amber' : 'blue'}>
-          {u.count === 0 ? 'None' : `${u.count} payment${u.count > 1 ? 's' : ''}`}
-        </Figure>
+        <Figure attention={u.count > 0}>{u.count === 0 ? 'None' : `${u.count} payment${u.count > 1 ? 's' : ''}`}</Figure>
       </StatCard>
 
       <StatCard
         label="Failed or pending"
-        color={failPend > 0 ? 'red' : 'blue'}
+        attention={failPend > 0}
         note={
           failPend > 0
             ? `${f.failed} failed, ${f.pending} stuck pending (over 5 min), last 24 hours`
             : 'Last 24 hours'
         }
       >
-        <Figure color={failPend > 0 ? 'red' : 'blue'}>
-          {failPend === 0 ? 'None' : failPend}
-        </Figure>
+        <Figure attention={failPend > 0}>{failPend === 0 ? 'None' : failPend}</Figure>
       </StatCard>
     </section>
   );
 }
 
-function Figure({ children, color }: { children: React.ReactNode; color: CardColor }) {
-  const cls = COLOR_STYLES[color].figure;
-  return <p className={`text-xl font-semibold font-mono tabular-nums ${cls}`}>{children}</p>;
+function Figure({ children, attention }: { children: React.ReactNode; attention?: boolean }) {
+  return (
+    <p className={`text-xl font-semibold font-mono tabular-nums ${attention ? 'text-amber-700' : 'text-ink-950'}`}>
+      {children}
+    </p>
+  );
 }
 
 function StatCard(props: {
@@ -83,21 +71,21 @@ function StatCard(props: {
   children: React.ReactNode;
   note?: React.ReactNode;
   href?: string;
-  color: CardColor;
+  attention?: boolean;
+  hero?: boolean;
 }) {
-  const styles = COLOR_STYLES[props.color];
-
   const cls = [
-    'block rounded-lg p-5 shadow-sm transition-transform',
-    styles.bg,
-    props.href ? 'hover:scale-[1.02]' : '',
+    'block rounded-lg border p-5',
+    props.hero ? 'border-ink-950 bg-ink-950' : 'border-slate-200 bg-white',
+    props.attention ? 'border-l-4 border-l-amber-600' : '',
+    props.href ? 'hover:border-accent/40' : '',
   ].join(' ');
 
   const body = (
     <>
-      <p className={`text-xs mb-1 font-medium ${styles.label}`}>{props.label}</p>
+      <p className={`text-xs mb-1 ${props.hero ? 'text-slate-300' : 'text-slate-500'}`}>{props.label}</p>
       {props.children}
-      {props.note && <p className={`mt-1 text-xs ${styles.note}`}>{props.note}</p>}
+      {props.note && <p className="mt-1 text-xs text-slate-500">{props.note}</p>}
     </>
   );
 
