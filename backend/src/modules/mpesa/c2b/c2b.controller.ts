@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { C2BService, C2BConfirmationPayload } from './c2b.service';
 
-@Controller('mpesa/c2b')
+@Controller('payments/c2b')
 export class C2BController {
   constructor(private readonly c2bService: C2BService) {}
 
