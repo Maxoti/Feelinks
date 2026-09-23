@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import PDFDocument from 'pdfkit';
 import { Receipt } from '../../database/entities/receipt.entity';
 import { Invoice } from '../../database/entities/invoice.entity';
@@ -22,11 +24,30 @@ export interface ReceiptContext {
 @Injectable()
 export class ReceiptsService {
   private readonly logger = new Logger(ReceiptsService.name);
+  private readonly s3: S3Client;
+  private readonly bucket: string;
+  private readonly publicUrlBase: string;
 
   constructor(
     @InjectRepository(Receipt) private readonly receiptsRepo: Repository<Receipt>,
     private readonly dataSource: DataSource,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    const accountId = this.config.get<string>('R2_ACCOUNT_ID')!;
+    this.bucket = this.config.get<string>('R2_BUCKET_NAME')!;
+    // R2's Public Development URL — the bucket must have this enabled (Settings ->
+    // Public Development URL -> Enable) for uploaded objects to resolve at this base.
+    this.publicUrlBase = this.config.get<string>('R2_PUBLIC_URL_BASE')!.replace(/\/$/, '');
+
+    this.s3 = new S3Client({
+      region: 'auto', // required by the SDK type, ignored by R2
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: this.config.get<string>('R2_ACCESS_KEY_ID')!,
+        secretAccessKey: this.config.get<string>('R2_SECRET_ACCESS_KEY')!,
+      },
+    });
+  }
 
   /**
    * Generates a receipt for a reconciled transaction, or returns the
@@ -66,9 +87,6 @@ export class ReceiptsService {
 
   private async renderAndStorePdf(receiptNo: number, ctx: ReceiptContext): Promise<string> {
     const buffer = await this.buildPdfBuffer(receiptNo, ctx);
-    // Upload target is Cloudflare R2 in this project's pattern (see RevisionHub).
-    // Swap this for the actual R2 client; kept abstracted here so the receipt
-    // logic and tests don't depend on network/storage credentials.
     return this.uploadToStorage(`receipts/${receiptNo}.pdf`, buffer);
   }
 
@@ -95,9 +113,18 @@ export class ReceiptsService {
   }
 
   private async uploadToStorage(key: string, buffer: Buffer): Promise<string> {
-    // Placeholder — wire to Cloudflare R2 client. Returning a deterministic
-    // URL shape so callers/tests aren't coupled to the storage implementation.
-    void buffer;
-    return `https://receipts.example.com/${key}`;
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: 'application/pdf',
+      }),
+    );
+    // Permanent public link via the bucket's Public Development URL.
+    // If you later attach a custom domain in R2 settings, just change
+    // R2_PUBLIC_URL_BASE — no code change needed, and old links keep working
+    // since the underlying object key/bucket stays the same.
+    return `${this.publicUrlBase}/${key}`;
   }
 }
