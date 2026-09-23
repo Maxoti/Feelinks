@@ -82,6 +82,7 @@ export class ReceiptsService {
       });
 
       return manager.save(receipt);
+      
     });
   }
 
