@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Student } from '../../database/entities/student.entity';
 import { CreateStudentDto } from './dto/create-student.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Injectable()
 export class StudentsService {
@@ -36,4 +37,24 @@ export class StudentsService {
   findByPhone(parentPhone: string): Promise<Student[]> {
     return this.studentsRepo.find({ where: { parentPhone } });
   }
+
+  async update(id: string, dto: UpdateStudentDto): Promise<Student> {
+  const student = await this.findOne(id);
+
+  if (dto.admissionNo && dto.admissionNo !== student.admissionNo) {
+    const existing = await this.studentsRepo.findOne({ where: { admissionNo: dto.admissionNo } });
+    if (existing) {
+      throw new ConflictException(`Admission number ${dto.admissionNo} is already registered`);
+    }
+  }
+
+  Object.assign(student, dto);
+  return this.studentsRepo.save(student);
+}
+
+async deactivate(id: string): Promise<Student> {
+  const student = await this.findOne(id);
+  student.status = 'inactive';
+  return this.studentsRepo.save(student);
+}
 }
