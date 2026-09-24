@@ -102,3 +102,11 @@ export interface PaymentRow extends MpesaTransaction {
   admissionNo: string | null;
   invoiceId: string | null;
 }
+
+export interface UpdateStudentPayload {
+  fullName?: string;
+  grade?: string;
+  parentName?: string;
+  parentPhone?: string;
+  status?: Student['status'];
+}

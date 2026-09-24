@@ -1,4 +1,4 @@
-import type { Student, Term, Invoice, BusinessAccount, Receipt, StkRequest, OverviewStats, MpesaTransaction, MpesaTxStatus, MatchCandidate, PaymentRow } from './types';
+import type { Student, Term, Invoice, BusinessAccount, Receipt, StkRequest, OverviewStats, MpesaTransaction, MpesaTxStatus, MatchCandidate, PaymentRow, UpdateStudentPayload } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -24,12 +24,16 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  students: {
+ students: {
     list: () => request<Student[]>('/students'),
-    get: (id: string) => request<Student>(`/students/${id}`),
-    create: (data: Partial<Student>) =>
+   get: (id: string) => request<Student>(`/students/${id}`),
+     create: (data: Partial<Student>) =>
       request<Student>('/students', { method: 'POST', body: JSON.stringify(data) }),
-  },
+     update: (id: string, data: UpdateStudentPayload) =>
+       request<Student>(`/students/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+   deactivate: (id: string) =>
+       request<Student>(`/students/${id}/deactivate`, { method: 'PATCH' }),
+   },
   terms: {
     list: () => request<Term[]>('/terms'),
     active: () => request<Term>('/terms/active'),
