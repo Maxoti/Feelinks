@@ -37,7 +37,7 @@ export class ReceiptsService {
     this.bucket = this.config.get<string>('R2_BUCKET_NAME')!;
     // R2's Public Development URL — the bucket must have this enabled (Settings ->
     // Public Development URL -> Enable) for uploaded objects to resolve at this base.
-    this.publicUrlBase = this.config.get<string>('R2_PUBLIC_URL_BASE')!.replace(/\/$/, '');
+    this.publicUrlBase = this.config.get<string>('R2_PUBLIC_URL_BASE')!.trim().replace(/\/+$/, '');
 
     this.s3 = new S3Client({
       region: 'auto', // required by the SDK type, ignored by R2
@@ -82,7 +82,7 @@ export class ReceiptsService {
       });
 
       return manager.save(receipt);
-      
+
     });
   }
 

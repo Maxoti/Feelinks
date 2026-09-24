@@ -2,13 +2,13 @@ import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } fr
 
 export class CreateTermDto {
   @IsInt() @Min(2000) @Max(2100)
-  year: number;
+  year!: number;
 
   @IsIn([1, 2, 3])
-  termNumber: number;
+  termNumber!: number;
 
   @IsString() @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsBoolean() @IsOptional()
   isActive?: boolean;
