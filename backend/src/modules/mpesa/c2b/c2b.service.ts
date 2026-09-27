@@ -27,12 +27,13 @@ export class C2BService {
     private readonly paymentsGateway: PaymentsGateway,
   ) {}
 
-  private parseTransTime(raw: string): Date {
-    const y = raw.slice(0, 4), mo = raw.slice(4, 6), d = raw.slice(6, 8);
-    const h = raw.slice(8, 10), mi = raw.slice(10, 12), s = raw.slice(12, 14);
-    return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`);
-  }
-
+ private parseTransTime(raw: string): Date {
+  // yyyyMMddHHmmss — Safaricom sends this in Africa/Nairobi local time (no DST, fixed UTC+3),
+  // not UTC, so the offset must be stated explicitly rather than assuming Z.
+  const y = raw.slice(0, 4), mo = raw.slice(4, 6), d = raw.slice(6, 8);
+  const h = raw.slice(8, 10), mi = raw.slice(10, 12), s = raw.slice(12, 14);
+  return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}+03:00`);
+}
   async handleConfirmation(payload: C2BConfirmationPayload): Promise<{ id: string; alreadyExisted: boolean }> {
     const account = await this.businessAccounts.findByShortcode(payload.BusinessShortCode);
 
