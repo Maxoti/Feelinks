@@ -8,6 +8,7 @@ import { PaymentEventsService } from '../../payment-events/payment-events.servic
 import { ReceiptsService } from '../../receipts/receipts.service';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { PaymentsGateway } from '../../realtime/payments.gateway';
+import { Term } from '../../../database/entities/term.entity';
 
 export interface MatchResult {
   invoiceId: string;
@@ -281,13 +282,26 @@ export class ReconciliationService {
       });
       return;
     }
+    // Term lookup — invoice.termId is always set (NOT NULL in schema.sql), but
+  // the row itself is looked up defensively; if it's ever missing we still
+  // want the receipt/SMS to go out rather than silently failing the whole
+  // payment notification just because of a blank term name.
+  const term = await this.dataSource.manager.findOne(Term, {
+    where: { id: invoice.termId },
+  });
+  if (!term) {
+    this.logger.warn(
+      `No term found for invoice ${invoice.id} (termId ${invoice.termId}) — ` +
+        `proceeding with receipt/SMS for tx ${transaction.id} with blank term name`,
+    );
+  }
 
     const receipt = await this.receiptsService.generateForTransaction({
       transactionId: transaction.id,
       invoiceId: match.invoiceId,
       studentName: student.fullName,
       admissionNo: student.admissionNo,
-      termName: '',
+      termName: term ? term.name : '',
       amountPaid: transaction.transAmount,
       balance: invoice.balance,
       mpesaReceiptNumber: transaction.transId,
