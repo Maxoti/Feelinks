@@ -3,6 +3,7 @@ import { api } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/Button';
 import { DataTable } from '@/components/DataTable';
+import { TermRowActions } from '@/components/TermRowActions';
 import type { Term } from '@/lib/types';
 
 export default async function TermsPage() {
@@ -22,11 +23,13 @@ export default async function TermsPage() {
         rows={terms}
         keyFor={(t) => t.id}
         emptyMessage="No terms configured yet."
+        pageSize={10}
         columns={[
           { header: 'Name', render: (t) => t.name },
           { header: 'Year', render: (t) => <span className="font-mono">{t.year}</span> },
           { header: 'Term', render: (t) => t.termNumber },
-          { header: 'Status', render: (t) => (t.isActive ? 'Active' : '—') },
+          { header: 'Status', render: (t) => (t.isActive ? 'Active' : '\u2014') },
+          { header: '', align: 'right', render: (t) => <TermRowActions term={t} /> },
         ]}
       />
     </>

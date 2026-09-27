@@ -34,13 +34,17 @@ export const api = {
    deactivate: (id: string) =>
        request<Student>(`/students/${id}/deactivate`, { method: 'PATCH' }),
    },
-  terms: {
+   terms: {
     list: () => request<Term[]>('/terms'),
     active: () => request<Term>('/terms/active'),
-    create: (data: { year: number; termNumber: number; name: string; isActive?: boolean }) =>
+    create: (data: { year: number; termNumber: number; isActive?: boolean }) =>
       request<Term>('/terms', { method: 'POST', body: JSON.stringify(data) }),
     activate: (id: string) => request<Term>(`/terms/${id}/activate`, { method: 'PATCH' }),
+    update: (id: string, data: { year?: number; termNumber?: number; isActive?: boolean }) =>
+      request<Term>(`/terms/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    remove: (id: string) => request<void>(`/terms/${id}`, { method: 'DELETE' }),
   },
+ 
   invoices: {
     list: (studentId?: string) =>
       request<Invoice[]>(`/invoices${studentId ? `?studentId=${studentId}` : ''}`),
