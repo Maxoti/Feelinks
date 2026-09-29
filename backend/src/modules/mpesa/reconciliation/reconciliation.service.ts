@@ -295,18 +295,19 @@ export class ReconciliationService {
         `proceeding with receipt/SMS for tx ${transaction.id} with blank term name`,
     );
   }
+  const receipt = await this.receiptsService.generateForTransaction({
+  transactionId: transaction.id,
+  invoiceId: match.invoiceId,
+  studentName: student.fullName,
+  admissionNo: student.admissionNo,
+  grade: student.grade ?? '',
+  termName: term ? term.name : '',
+  amountPaid: transaction.transAmount,
+  balance: invoice.balance,
+  mpesaReceiptNumber: transaction.transId,
+  paidAt: transaction.transTime,
+});
 
-    const receipt = await this.receiptsService.generateForTransaction({
-      transactionId: transaction.id,
-      invoiceId: match.invoiceId,
-      studentName: student.fullName,
-      admissionNo: student.admissionNo,
-      termName: term ? term.name : '',
-      amountPaid: transaction.transAmount,
-      balance: invoice.balance,
-      mpesaReceiptNumber: transaction.transId,
-      paidAt: transaction.transTime,
-    });
 
     await this.notificationsService.sendReceiptSms({
       invoiceId: match.invoiceId,

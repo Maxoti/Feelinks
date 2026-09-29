@@ -121,7 +121,7 @@ export class DarajaClientService {
 
     try {
       await axios.post(
-        `${this.baseUrl}/mpesa/c2b/v1/registerurl`,
+        `${this.baseUrl}/mpesa/c2b/v2/registerurl`,
         {
           ShortCode: params.shortcode,
           ResponseType: 'Completed',

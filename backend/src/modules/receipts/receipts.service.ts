@@ -15,6 +15,7 @@ export interface ReceiptContext {
   studentName: string;
   admissionNo: string;
   termName: string;
+   grade: string;
   amountPaid: string;
   balance: string;
   mpesaReceiptNumber: string;
@@ -105,6 +106,7 @@ export class ReceiptsService {
       doc.text(`Receipt No: ${receiptNo}`);
       doc.text(`Date: ${ctx.paidAt.toISOString()}`);
       doc.text(`Student: ${ctx.studentName} (${ctx.admissionNo})`);
+      doc.text(`Grade: ${ctx.grade}`);
       doc.text(`Term: ${ctx.termName}`);
       doc.text(`Amount paid: KES ${ctx.amountPaid}`);
       doc.text(`Balance: KES ${ctx.balance}`);
